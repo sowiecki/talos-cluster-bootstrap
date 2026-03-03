@@ -25,9 +25,12 @@ provider "proxmox" {
   insecure  = true
 
   ssh {
-    agent    = true
-    username = "root"
+    agent       = var.proxmox_ssh_private_key_path == null ? true : false
+    username    = "root"
+    private_key = var.proxmox_ssh_private_key_path != null ? file(var.proxmox_ssh_private_key_path) : null
   }
 }
 
-provider "talos" {}
+provider "talos" {
+  # No additional configuration needed
+}

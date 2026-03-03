@@ -6,23 +6,24 @@ resource "talos_image_factory_schematic" "this" {
 }
 
 resource "proxmox_virtual_environment_download_file" "talos_image" {
-  node_name               = "pve01"
-  datastore_id            = "k3s-storage"
+  node_name               = local.node_name
+  datastore_id            = local.datastore_id
   content_type            = "iso"
-  file_name               = "talos-${talos_image_factory_schematic.this.id}-v1.9.5-nocloud-amd64.raw.xz.img"
-  url                     = "https://factory.talos.dev/image/${talos_image_factory_schematic.this.id}/v1.9.5/nocloud-amd64.raw.xz"
+  file_name               = "talos-${talos_image_factory_schematic.this.id}-v1.9.5-nocloud-amd64.raw.img"
+  url                     = "https://factory.talos.dev/image/${talos_image_factory_schematic.this.id}/v1.9.5/nocloud-amd64.raw.zst"
   decompression_algorithm = "zst"
   overwrite               = false
 }
 
 # ----------------------------------------------------------------------
-# 2. Create a template VM from the downloaded image (stopped)
+# 2. Create a template VM directly from the downloaded image
 # ----------------------------------------------------------------------
-resource "proxmox_virtual_environment_vm" "talos_template_vm" {
-  name      = "talos-template-auto"
-  node_name = "pve01"
+resource "proxmox_virtual_environment_vm" "talos_template" {
+  name      = "talos-template"
+  node_name = local.node_name
   vm_id     = 9999
-  started   = false # <-- Keep stopped for template conversion
+  template  = true # Creates a template directly
+  started   = false
 
   cpu {
     cores = 2
@@ -34,7 +35,7 @@ resource "proxmox_virtual_environment_vm" "talos_template_vm" {
   }
 
   disk {
-    datastore_id = "k3s-storage"
+    datastore_id = local.datastore_id
     interface    = "scsi0"
     size         = 10
     file_format  = "raw"
@@ -42,7 +43,7 @@ resource "proxmox_virtual_environment_vm" "talos_template_vm" {
   }
 
   network_device {
-    bridge = "vmbr0"
+    bridge = local.bridge
     model  = "virtio"
   }
 
@@ -55,34 +56,25 @@ resource "proxmox_virtual_environment_vm" "talos_template_vm" {
   }
 }
 
-# Convert the VM to a template
-resource "null_resource" "convert_to_template" {
-  depends_on = [proxmox_virtual_environment_vm.talos_template_vm]
-
-  provisioner "local-exec" {
-    command = "ssh -i ~/.ssh/proxmox-k3s root@192.168.1.65 qm template ${proxmox_virtual_environment_vm.talos_template_vm.vm_id}"
-  }
-}
-
 # ----------------------------------------------------------------------
-# 3. Generate Talos secrets (explicitly set version to match nodes)
+# 3. Generate Talos secrets (version locked)
 # ----------------------------------------------------------------------
 resource "talos_machine_secrets" "this" {
-  talos_version = "v1.9.5"
+  talos_version = local.talos_version
 }
 
 # ----------------------------------------------------------------------
 # 4. Create the cluster VMs (clone from the template)
 # ----------------------------------------------------------------------
 resource "proxmox_virtual_environment_vm" "control_plane" {
-  depends_on = [null_resource.convert_to_template]
+  depends_on = [proxmox_virtual_environment_vm.talos_template]
 
-  name      = "nase-dev-prod-cp-1"
-  node_name = "pve01"
+  name      = "${local.cluster_name}-cp-1"
+  node_name = local.node_name
   tags      = ["talos", "control-plane"]
 
   clone {
-    vm_id = proxmox_virtual_environment_vm.talos_template_vm.vm_id
+    vm_id = proxmox_virtual_environment_vm.talos_template.vm_id
   }
 
   cpu {
@@ -95,14 +87,14 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   }
 
   disk {
-    datastore_id = "k3s-storage"
+    datastore_id = local.datastore_id
     interface    = "scsi0"
     size         = 40
     file_format  = "raw"
   }
 
   network_device {
-    bridge = "vmbr0"
+    bridge = local.bridge
     model  = "virtio"
   }
 
@@ -113,25 +105,26 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.1.61/24"
-        gateway = "192.168.1.1"
+        address = "${local.control_plane_ip}/24"
+        gateway = local.gateway
       }
     }
     dns {
-      servers = ["192.168.1.100", "8.8.8.8"]
+      servers = local.dns_servers
     }
   }
 }
 
-resource "proxmox_virtual_environment_vm" "worker_1" {
-  depends_on = [null_resource.convert_to_template]
+resource "proxmox_virtual_environment_vm" "worker" {
+  count      = 2
+  depends_on = [proxmox_virtual_environment_vm.talos_template]
 
-  name      = "nase-dev-prod-worker-1"
-  node_name = "pve01"
+  name      = "${local.cluster_name}-worker-${count.index + 1}"
+  node_name = local.node_name
   tags      = ["talos", "worker"]
 
   clone {
-    vm_id = proxmox_virtual_environment_vm.talos_template_vm.vm_id
+    vm_id = proxmox_virtual_environment_vm.talos_template.vm_id
   }
 
   cpu {
@@ -144,14 +137,14 @@ resource "proxmox_virtual_environment_vm" "worker_1" {
   }
 
   disk {
-    datastore_id = "k3s-storage"
+    datastore_id = local.datastore_id
     interface    = "scsi0"
     size         = 40
     file_format  = "raw"
   }
 
   network_device {
-    bridge = "vmbr0"
+    bridge = local.bridge
     model  = "virtio"
   }
 
@@ -162,61 +155,12 @@ resource "proxmox_virtual_environment_vm" "worker_1" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.1.62/24"
-        gateway = "192.168.1.1"
+        address = "${local.worker_ips[count.index]}/24"
+        gateway = local.gateway
       }
     }
     dns {
-      servers = ["192.168.1.100", "8.8.8.8"]
-    }
-  }
-}
-
-resource "proxmox_virtual_environment_vm" "worker_2" {
-  depends_on = [null_resource.convert_to_template]
-
-  name      = "nase-dev-prod-worker-2"
-  node_name = "pve01"
-  tags      = ["talos", "worker"]
-
-  clone {
-    vm_id = proxmox_virtual_environment_vm.talos_template_vm.vm_id
-  }
-
-  cpu {
-    cores = 4
-    type  = "host"
-  }
-
-  memory {
-    dedicated = 8192
-  }
-
-  disk {
-    datastore_id = "k3s-storage"
-    interface    = "scsi0"
-    size         = 40
-    file_format  = "raw"
-  }
-
-  network_device {
-    bridge = "vmbr0"
-    model  = "virtio"
-  }
-
-  agent {
-    enabled = true
-  }
-
-  initialization {
-    ip_config {
-      ipv4 {
-        address = "192.168.1.63/24"
-        gateway = "192.168.1.1"
-      }
-    }
-    dns {
-      servers = ["192.168.1.100", "8.8.8.8"]
+      servers = local.dns_servers
     }
   }
 }
@@ -227,21 +171,20 @@ resource "proxmox_virtual_environment_vm" "worker_2" {
 resource "time_sleep" "wait_for_vms" {
   depends_on = [
     proxmox_virtual_environment_vm.control_plane,
-    proxmox_virtual_environment_vm.worker_1,
-    proxmox_virtual_environment_vm.worker_2
+    proxmox_virtual_environment_vm.worker
   ]
   create_duration = "60s"
 }
 
 # ----------------------------------------------------------------------
-# 6. Prepare Talos machine configurations (version locked to v1.9.5)
+# 6. Prepare Talos machine configurations
 # ----------------------------------------------------------------------
 data "talos_machine_configuration" "controlplane" {
-  cluster_name     = "nase-dev-prod"
-  cluster_endpoint = "https://192.168.1.61:6443"
+  cluster_name     = local.cluster_name
+  cluster_endpoint = local.cluster_endpoint
   machine_type     = "controlplane"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
-  talos_version    = "v1.9.5"
+  talos_version    = local.talos_version
 
   config_patches = [
     yamlencode({
@@ -263,11 +206,11 @@ data "talos_machine_configuration" "controlplane" {
 
 data "talos_machine_configuration" "worker" {
   count            = 2
-  cluster_name     = "nase-dev-prod"
-  cluster_endpoint = "https://192.168.1.61:6443"
+  cluster_name     = local.cluster_name
+  cluster_endpoint = local.cluster_endpoint
   machine_type     = "worker"
   machine_secrets  = talos_machine_secrets.this.machine_secrets
-  talos_version    = "v1.9.5"
+  talos_version    = local.talos_version
 
   config_patches = [
     yamlencode({
@@ -287,19 +230,11 @@ data "talos_machine_configuration" "worker" {
   ]
 }
 
-# Generate a proper talosconfig file with endpoints
-data "talos_client_configuration" "this" {
-  cluster_name         = "nase-dev-prod"
-  client_configuration = talos_machine_secrets.this.client_configuration
-  endpoints            = ["192.168.1.61"]                                 # Control plane API endpoint
-  nodes                = ["192.168.1.61", "192.168.1.62", "192.168.1.63"] # All nodes
-}
-
 # ----------------------------------------------------------------------
 # 7. Apply configurations to nodes
 # ----------------------------------------------------------------------
 resource "talos_machine_configuration_apply" "controlplane" {
-  node                        = "192.168.1.61"
+  node                        = local.control_plane_ip
   machine_configuration_input = data.talos_machine_configuration.controlplane.machine_configuration
   client_configuration        = talos_machine_secrets.this.client_configuration
   depends_on                  = [time_sleep.wait_for_vms]
@@ -307,31 +242,45 @@ resource "talos_machine_configuration_apply" "controlplane" {
 
 resource "talos_machine_configuration_apply" "worker" {
   count                       = 2
-  node                        = count.index == 0 ? "192.168.1.62" : "192.168.1.63"
+  node                        = local.worker_ips[count.index]
   machine_configuration_input = data.talos_machine_configuration.worker[count.index].machine_configuration
   client_configuration        = talos_machine_secrets.this.client_configuration
   depends_on                  = [talos_machine_configuration_apply.controlplane]
 }
 
 # ----------------------------------------------------------------------
-# 8. Wait for bootstrap to complete
+# 8. Bootstrap the cluster
+# ----------------------------------------------------------------------
+resource "talos_machine_bootstrap" "controlplane" {
+  node                 = local.control_plane_ip
+  client_configuration = talos_machine_secrets.this.client_configuration
+  depends_on           = [talos_machine_configuration_apply.controlplane]
+}
+
+# ----------------------------------------------------------------------
+# 9. Wait for bootstrap to complete
 # ----------------------------------------------------------------------
 resource "time_sleep" "wait_for_bootstrap" {
-  depends_on      = [talos_machine_configuration_apply.worker]
+  depends_on      = [talos_machine_bootstrap.controlplane]
   create_duration = "180s"
 }
 
 # ----------------------------------------------------------------------
-# 9. Write talosconfig (needed for talosctl)
+# 10. Generate talosconfig and kubeconfig
 # ----------------------------------------------------------------------
+data "talos_client_configuration" "this" {
+  cluster_name         = local.cluster_name
+  client_configuration = talos_machine_secrets.this.client_configuration
+  endpoints            = [local.control_plane_ip]
+  nodes                = local.all_ips
+}
+
 resource "local_file" "talosconfig" {
   content  = data.talos_client_configuration.this.talos_config
   filename = "${path.module}/talosconfig"
 }
 
-# ----------------------------------------------------------------------
-# 10. Retrieve kubeconfig with retries (using -n for node)
-# ----------------------------------------------------------------------
+# Fetch kubeconfig with retries
 resource "null_resource" "fetch_kubeconfig" {
   depends_on = [time_sleep.wait_for_bootstrap, local_file.talosconfig]
 
@@ -341,7 +290,7 @@ resource "null_resource" "fetch_kubeconfig" {
       COUNTER=0
       MAX_RETRIES=60
       SLEEP_SEC=10
-      NODE="192.168.1.61"
+      NODE="${local.control_plane_ip}"
       until talosctl --talosconfig talosconfig -n $NODE kubeconfig .; do
         if [ $COUNTER -ge $MAX_RETRIES ]; then
           echo "Failed to get kubeconfig after $((MAX_RETRIES * SLEEP_SEC)) seconds"
@@ -361,8 +310,20 @@ resource "null_resource" "fetch_kubeconfig" {
 }
 
 # ----------------------------------------------------------------------
-# 11. Output the path to kubeconfig
+# 11. Outputs
 # ----------------------------------------------------------------------
 output "kubeconfig_path" {
   value = abspath("${path.module}/kubeconfig")
+}
+
+output "talosconfig_path" {
+  value = abspath("${path.module}/talosconfig")
+}
+
+output "control_plane_ip" {
+  value = local.control_plane_ip
+}
+
+output "worker_ips" {
+  value = local.worker_ips
 }
