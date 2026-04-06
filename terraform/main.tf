@@ -23,7 +23,7 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   vm_id     = 105
 
   cpu {
-    cores = 2
+    cores = 10
     type  = "host"
   }
 
@@ -75,12 +75,12 @@ resource "proxmox_virtual_environment_vm" "worker" {
   vm_id     = 106 + count.index
 
   cpu {
-    cores = 4
+    cores = 10
     type  = "host"
   }
 
   memory {
-    dedicated = 8192
+    dedicated = 14000 # out of 15691MB
   }
 
   disk {
