@@ -574,7 +574,7 @@ data "kubernetes_service" "ingress_nginx" {
     name      = "ingress-nginx-controller"
     namespace = helm_release.ingress_nginx.namespace
   }
-  depends_on = [helm_release.ingress_nginx]
+  depends_on = [helm_release.ingress_nginx, time_sleep.wait_after_metallb]
 }
 
 output "ingress_controller_ip" {

@@ -24,11 +24,8 @@ provider "proxmox" {
 provider "talos" {}
 
 provider "kubernetes" {
-  config_path            = local.kubeconfig_path
-  host                   = local.kubeconfig_yaml.clusters[0].cluster.server
-  cluster_ca_certificate = local.cluster_ca_cert
-  client_certificate     = base64decode(local.kubeconfig_yaml.users[0].user.client-certificate-data)
-  client_key             = base64decode(local.kubeconfig_yaml.users[0].user.client-key-data)
+  config_path = local.kubeconfig_path
+  host        = local.kubeconfig_yaml.clusters[0].cluster.server
 }
 
 provider "helm" {
