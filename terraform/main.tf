@@ -40,8 +40,9 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   }
 
   network_device {
-    bridge = local.bridge
-    model  = "virtio"
+    bridge      = local.bridge
+    model       = "virtio"
+    mac_address = "BC:24:11:00:00:61"
   }
 
   agent {
@@ -92,8 +93,9 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   network_device {
-    bridge = local.bridge
-    model  = "virtio"
+    bridge      = local.bridge
+    model       = "virtio"
+    mac_address = "BC:24:11:00:00:${62 + count.index}"
   }
 
   agent {

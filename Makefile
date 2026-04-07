@@ -104,7 +104,7 @@ verify:
 # ----------------------------------------------------------------------
 destroy:
 	@echo "💥 Destroying cluster..."
-	tofu destroy -auto-approve
+	cd $(TERRAFORM_DIR) && tofu destroy -auto-approve
 
 clean: destroy
 	@rm -f kubeconfig talosconfig .proxmox-token
