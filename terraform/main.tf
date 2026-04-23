@@ -67,7 +67,8 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
 }
 
 resource "proxmox_virtual_environment_vm" "worker" {
-  count = length(local.worker_ips)
+  depends_on = [talos_image_factory_schematic.this]
+  count      = length(local.worker_ips)
 
   node_name = element(local.proxmox_nodes, count.index + 1)
   name      = "${local.cluster_name}-worker-${count.index + 1}"
@@ -76,7 +77,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
   vm_id     = 106 + count.index
 
   cpu {
-    cores = 10
+    cores = count.index == 2 ? 6 : 10 # pve04 only has 6 cores
     type  = "host"
   }
 
@@ -335,6 +336,7 @@ resource "helm_release" "cilium" {
   values = [
     yamlencode({
       kubeProxyReplacement = "true"
+      enable-strict-arp    = "true"
       routingMode          = "tunnel"
       tunnelProtocol       = "geneve"
       ipv4                 = { enabled = true }
@@ -580,4 +582,16 @@ data "kubernetes_service" "ingress_nginx" {
 output "ingress_controller_ip" {
   value       = data.kubernetes_service.ingress_nginx.status[0].load_balancer[0].ingress[0].ip
   description = "External IP of the Ingress controller (single shared IP for all web apps)"
+}
+
+# ----------------------------------------------------------------------
+# Wazuh Namespace with PodSecurity Label
+# ----------------------------------------------------------------------
+resource "kubernetes_namespace" "wazuh" {
+  metadata {
+    name = "wazuh"
+    labels = {
+      "pod-security.kubernetes.io/enforce" = "privileged"
+    }
+  }
 }
