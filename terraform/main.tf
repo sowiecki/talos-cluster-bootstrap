@@ -45,8 +45,10 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
     mac_address = "BC:24:11:00:00:61"
   }
 
+  # Shouldn't be needed since agents are on static IPs
   agent {
-    enabled = true
+    enabled = false
+    timeout = "15s"
   }
 
   operating_system {
@@ -100,7 +102,8 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   agent {
-    enabled = true
+    enabled = false
+    timeout = "15s"
   }
 
   operating_system {
@@ -135,11 +138,12 @@ resource "time_sleep" "wait_for_vms" {
 # 5. Prepare Talos machine configurations (CNI = "none")
 # ----------------------------------------------------------------------
 data "talos_machine_configuration" "controlplane" {
-  cluster_name     = local.cluster_name
-  cluster_endpoint = local.cluster_endpoint
-  machine_type     = "controlplane"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
-  talos_version    = local.talos_version
+  cluster_name       = local.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  machine_type       = "controlplane"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = local.talos_version
+  kubernetes_version = "1.35.0"
 
   config_patches = [
     yamlencode({
@@ -176,12 +180,13 @@ data "talos_machine_configuration" "controlplane" {
 }
 
 data "talos_machine_configuration" "worker" {
-  count            = length(local.worker_ips)
-  cluster_name     = local.cluster_name
-  cluster_endpoint = local.cluster_endpoint
-  machine_type     = "worker"
-  machine_secrets  = talos_machine_secrets.this.machine_secrets
-  talos_version    = local.talos_version
+  count              = length(local.worker_ips)
+  cluster_name       = local.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = local.talos_version
+  kubernetes_version = "1.35.0"
 
   config_patches = [
     yamlencode({
@@ -275,7 +280,7 @@ resource "null_resource" "fetch_kubeconfig" {
       MAX_RETRIES=60
       SLEEP_SEC=10
       NODE="${local.control_plane_ip}"
-      until talosctl --talosconfig talosconfig --nodes $NODE kubeconfig .; do
+      until talosctl --talosconfig talosconfig --nodes $NODE kubeconfig . ; do
         if [ $COUNTER -ge $MAX_RETRIES ]; then
           echo "Failed to get kubeconfig after $((MAX_RETRIES * SLEEP_SEC)) seconds"
           exit 1
@@ -332,6 +337,7 @@ resource "helm_release" "cilium" {
   namespace  = "kube-system"
   version    = "1.19.1"
   timeout    = 900
+  wait       = false
 
   values = [
     yamlencode({
@@ -341,6 +347,13 @@ resource "helm_release" "cilium" {
       tunnelProtocol       = "geneve"
       ipv4                 = { enabled = true }
       ipv6                 = { enabled = false }
+
+      encapsulation = {
+        geneve = {
+          mtu = 1450
+        }
+      }
+
       hubble = {
         enabled = true
         relay   = { enabled = true }
@@ -388,7 +401,6 @@ resource "helm_release" "nfs_csi" {
       storageClass = {
         name                 = "truenas-nfs"
         defaultClass         = true
-        reclaimPolicy        = "Delete"
         allowVolumeExpansion = true
         mountOptions         = ["nfsvers=4", "hard", "noatime"]
       }

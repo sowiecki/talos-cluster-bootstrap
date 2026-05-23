@@ -14,6 +14,7 @@ provider "proxmox" {
   endpoint  = "https://192.168.1.65:8006/"
   api_token = var.proxmox_api_token
   insecure  = true
+
   ssh {
     agent       = var.proxmox_ssh_private_key_path == null ? true : false
     username    = "root"
