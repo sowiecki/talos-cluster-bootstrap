@@ -1,9 +1,19 @@
 locals {
+  # Dynamically extract the external MetalLB IPs assigned to Technitium
+  technitium_primary_ip   = data.kubernetes_service.technitium_primary.status[0].load_balancer[0].ingress[0].ip
+  technitium_secondary_ip = data.kubernetes_service.technitium_secondary.status[0].load_balancer[0].ingress[0].ip
+
+  # Use the external IPs (routable from the host network) + public fallback
+  dns_servers = [
+    local.technitium_primary_ip,
+    local.technitium_secondary_ip,
+    "1.1.1.1"
+  ]
+
   node_name        = "pve01"
   proxmox_nodes    = ["pve01", "pve02", "pve03", "pve04"]
   bridge           = "vmbr0"
   gateway          = "192.168.1.1"
-  dns_servers      = ["192.168.1.100", "8.8.8.8"]
   talos_version    = "v1.13.0"
   cluster_name     = "nase-dev-prod"
   control_plane_ip = "192.168.1.61"
