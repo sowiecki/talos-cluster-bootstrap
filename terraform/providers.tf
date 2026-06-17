@@ -19,6 +19,23 @@ provider "proxmox" {
     agent       = var.proxmox_ssh_private_key_path == null ? true : false
     username    = "root"
     private_key = var.proxmox_ssh_private_key_path != null ? file(var.proxmox_ssh_private_key_path) : null
+
+    node {
+      name    = "pve01"
+      address = "192.168.1.65"
+    }
+    node {
+      name    = "pve02"
+      address = "192.168.1.66"
+    }
+    node {
+      name    = "pve03"
+      address = "192.168.1.67"
+    }
+    node {
+      name    = "pve04"
+      address = "192.168.1.68"
+    }
   }
 }
 

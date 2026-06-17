@@ -4,7 +4,7 @@ locals {
   bridge           = "vmbr0"
   gateway          = "192.168.1.1"
   dns_servers      = ["192.168.1.100", "8.8.8.8"]
-  talos_version    = "v1.9.5"
+  talos_version    = "v1.13.0"
   cluster_name     = "nase-dev-prod"
   control_plane_ip = "192.168.1.61"
   worker_ips       = ["192.168.1.62", "192.168.1.63", "192.168.1.64"]

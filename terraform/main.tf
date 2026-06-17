@@ -34,9 +34,9 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   disk {
     datastore_id = "local-lvm"
     interface    = "scsi0"
-    size         = 40
+    size         = 200
     file_format  = "raw"
-    file_id      = "local:iso/talos-${talos_image_factory_schematic.this.id}-v1.9.5-nocloud-amd64.raw.img"
+    file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
   }
 
   network_device {
@@ -90,9 +90,9 @@ resource "proxmox_virtual_environment_vm" "worker" {
   disk {
     datastore_id = "local-lvm"
     interface    = "scsi0"
-    size         = 40
+    size         = 950
     file_format  = "raw"
-    file_id      = "local:iso/talos-${talos_image_factory_schematic.this.id}-v1.9.5-nocloud-amd64.raw.img"
+    file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
   }
 
   network_device {
@@ -250,7 +250,7 @@ resource "talos_machine_bootstrap" "controlplane" {
 # ----------------------------------------------------------------------
 resource "time_sleep" "wait_for_bootstrap" {
   depends_on      = [talos_machine_bootstrap.controlplane]
-  create_duration = "600s"
+  create_duration = "10s"
 }
 
 # ----------------------------------------------------------------------
@@ -347,6 +347,7 @@ resource "helm_release" "cilium" {
       tunnelProtocol       = "geneve"
       ipv4                 = { enabled = true }
       ipv6                 = { enabled = false }
+      MTU                  = 1450
 
       encapsulation = {
         geneve = {
@@ -599,11 +600,11 @@ output "ingress_controller_ip" {
 # ----------------------------------------------------------------------
 # Wazuh Namespace with PodSecurity Label
 # ----------------------------------------------------------------------
-resource "kubernetes_namespace" "wazuh" {
-  metadata {
-    name = "wazuh"
-    labels = {
-      "pod-security.kubernetes.io/enforce" = "privileged"
-    }
-  }
-}
+# resource "kubernetes_namespace" "wazuh" {
+#   metadata {
+#     name = "wazuh"
+#     labels = {
+#       "pod-security.kubernetes.io/enforce" = "privileged"
+#     }
+#   }
+# }

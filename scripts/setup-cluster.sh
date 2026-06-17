@@ -120,10 +120,9 @@ retry_on_cert_error "helm upgrade --install nfs-csi nfs-subdir-external-provisio
 echo "Installing Ingress NGINX..."
 retry_on_cert_error "helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
   --namespace ingress-nginx \
-  --create-namespace \
   --version 4.11.3 \
   --set controller.service.type=LoadBalancer \
-  --set controller.service.annotations.\"metallb\\.universe\\.tf/address-pool\"=homelab-pool \
+  --set controller.service.annotations."metallb\.universe\.tf/address-pool"=homelab-pool \
   --set controller.resources.requests.cpu=100m \
   --set controller.resources.requests.memory=128Mi \
   --set controller.allowSnippetAnnotations=true \
