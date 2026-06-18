@@ -624,29 +624,3 @@ output "ingress_controller_ip" {
 #     }
 #   }
 # }
-
-resource "kubernetes_manifest" "allow_dns_egress" {
-  depends_on = [null_resource.wait_for_api]
-  manifest = {
-    apiVersion = "cilium.io/v2"
-    kind       = "CiliumClusterwideNetworkPolicy"
-    metadata   = { name = "allow-dns-egress" }
-    spec = {
-      endpointSelector = {}
-      egress = [
-        {
-          toServices = [{
-            k8sService = {
-              serviceName = "kube-dns"
-              namespace   = "kube-system"
-            }
-          }]
-          toPorts = [{ ports = [{ port = "53", protocol = "ANY" }] }]
-        },
-        {
-          toEntities = ["world", "cluster", "host"]
-        }
-      ]
-    }
-  }
-}
