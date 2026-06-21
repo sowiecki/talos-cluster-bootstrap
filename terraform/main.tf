@@ -66,6 +66,13 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
       servers = local.dns_servers
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      disk,           # ignore disk file_id changes
+      initialization, # ignore ISO/cloud-init changes
+    ]
+  }
 }
 
 resource "proxmox_virtual_environment_vm" "worker" {
@@ -121,6 +128,13 @@ resource "proxmox_virtual_environment_vm" "worker" {
       servers = local.dns_servers
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      disk,           # ignore disk file_id changes
+      initialization, # ignore ISO/cloud-init changes
+    ]
+  }
 }
 
 # ----------------------------------------------------------------------
@@ -157,7 +171,8 @@ data "talos_machine_configuration" "controlplane" {
         }
         kubelet = {
           extraArgs = {
-            node-ip = local.control_plane_ip
+            node-ip     = local.control_plane_ip
+            cluster-dns = "10.96.0.10"
           }
         }
         sysctls = {
