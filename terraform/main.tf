@@ -28,7 +28,7 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   }
 
   memory {
-    dedicated = 4096
+    dedicated = 8192
   }
 
   disk {
@@ -83,15 +83,15 @@ resource "proxmox_virtual_environment_vm" "worker" {
   name      = "${local.cluster_name}-worker-${count.index + 1}"
   tags      = ["talos", "worker"]
   started   = true
-  vm_id     = 106 + count.index
+  vm_id     = local.worker_vm_ids[count.index]
 
   cpu {
-    cores = count.index == 2 ? 6 : 10 # pve04 only has 6 cores
+    cores = local.worker_hardware[count.index].cores
     type  = "host"
   }
 
   memory {
-    dedicated = 14000 # out of 15691MB
+    dedicated = local.worker_hardware[count.index].memory
   }
 
   disk {
@@ -221,14 +221,28 @@ data "talos_machine_configuration" "worker" {
           servers = ["pool.ntp.org"]
         }
         kubelet = {
-          extraArgs = {
-            node-ip = local.worker_ips[count.index]
-          }
+          extraArgs = merge(
+            {
+              node-ip = local.worker_ips[count.index]
+            },
+            # Only the performance class gets registration labels + higher
+            # pod density. For "standard" nodes this merges in an empty map,
+            # so their rendered config stays byte-identical to today.
+            try(local.worker_class[count.index], "standard") == "performance" ? {
+              node-labels = local.worker_node_labels["performance"]
+              max-pods    = "250"
+            } : {}
+          )
         }
-        sysctls = {
-          "vm.max_map_count"   = "262144"
-          "net.core.somaxconn" = "4096"
-        }
+        sysctls = merge(
+          {
+            "vm.max_map_count"   = "262144"
+            "net.core.somaxconn" = "4096"
+          },
+          try(local.worker_class[count.index], "standard") == "performance"
+          ? local.performance_sysctls
+          : {}
+        )
       }
       cluster = {
         network = {
