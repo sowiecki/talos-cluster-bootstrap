@@ -57,7 +57,7 @@ locals {
     { cores = 10, memory = 14000 }, # pve02
     { cores = 10, memory = 14000 }, # pve03
     { cores = 6, memory = 14000 },  # pve04
-    { cores = 12, memory = 20000 }, # pve05
+    { cores = 10, memory = 20000 }, # pve05
   ]
 
   # Index-aligned with local.worker_ips.
