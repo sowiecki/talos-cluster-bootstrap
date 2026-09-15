@@ -52,12 +52,19 @@ locals {
     "performance" # pve05
   ]
 
+  /*
+    pve05 memory allocation, keep at 30GB or below
+      pbs: 4GB (recommended for prod)
+      k8s worker node: 18GB
+      game node: 8GB
+  */
+
   # Index-aligned with local.worker_ips.
   worker_hardware = [
     { cores = 10, memory = 14000 }, # pve02
     { cores = 10, memory = 14000 }, # pve03
     { cores = 6, memory = 14000 },  # pve04
-    { cores = 10, memory = 20000 }, # pve05
+    { cores = 10, memory = 18432 }, # pve05
   ]
 
   # Index-aligned with local.worker_ips.
