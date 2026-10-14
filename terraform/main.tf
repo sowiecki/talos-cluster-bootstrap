@@ -75,68 +75,6 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
   }
 }
 
-resource "proxmox_virtual_environment_vm" "worker" {
-  depends_on = [talos_image_factory_schematic.this]
-  count      = length(local.worker_ips)
-
-  node_name = element(local.proxmox_nodes, count.index + 1)
-  name      = "${local.cluster_name}-worker-${count.index + 1}"
-  tags      = ["talos", "worker"]
-  started   = true
-  vm_id     = local.worker_vm_ids[count.index]
-
-  cpu {
-    cores = local.worker_hardware[count.index].cores
-    type  = "host"
-  }
-
-  memory {
-    dedicated = local.worker_hardware[count.index].memory
-  }
-
-  disk {
-    datastore_id = "local-lvm"
-    interface    = "scsi0"
-    size         = 950
-    file_format  = "raw"
-    file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
-  }
-
-  network_device {
-    bridge      = local.bridge
-    model       = "virtio"
-    mac_address = "BC:24:11:00:00:${62 + count.index}"
-  }
-
-  agent {
-    enabled = false
-    timeout = "15s"
-  }
-
-  operating_system {
-    type = "l26"
-  }
-
-  initialization {
-    ip_config {
-      ipv4 {
-        address = "${local.worker_ips[count.index]}/24"
-        gateway = local.gateway
-      }
-    }
-    dns {
-      servers = local.dns_servers
-    }
-  }
-
-  lifecycle {
-    ignore_changes = [
-      disk,           # ignore disk file_id changes
-      initialization, # ignore ISO/cloud-init changes
-    ]
-  }
-}
-
 # ----------------------------------------------------------------------
 # 4. Wait for VMs to boot
 # ----------------------------------------------------------------------
@@ -202,67 +140,6 @@ data "talos_machine_configuration" "controlplane" {
   ]
 }
 
-data "talos_machine_configuration" "worker" {
-  count              = length(local.worker_ips)
-  cluster_name       = local.cluster_name
-  cluster_endpoint   = local.cluster_endpoint
-  machine_type       = "worker"
-  machine_secrets    = talos_machine_secrets.this.machine_secrets
-  talos_version      = local.talos_version
-  kubernetes_version = "1.35.0"
-
-  config_patches = [
-    yamlencode({
-      machine = {
-        install = {
-          disk = "/dev/sda"
-        }
-        time = {
-          servers = ["pool.ntp.org"]
-        }
-        kubelet = {
-          extraArgs = merge(
-            {
-              node-ip = local.worker_ips[count.index]
-            },
-            # Only the performance class gets registration labels + higher
-            # pod density. For "standard" nodes this merges in an empty map,
-            # so their rendered config stays byte-identical to today.
-            try(local.worker_class[count.index], "standard") == "performance" ? {
-              node-labels = local.worker_node_labels["performance"]
-              max-pods    = "250"
-            } : {}
-          )
-        }
-        sysctls = merge(
-          {
-            "vm.max_map_count"   = "262144"
-            "net.core.somaxconn" = "4096"
-          },
-          try(local.worker_class[count.index], "standard") == "performance"
-          ? local.performance_sysctls
-          : {}
-        )
-      }
-      cluster = {
-        network = {
-          cni = {
-            name = "none"
-          }
-        }
-      }
-    }),
-
-    yamlencode({
-      machine = {
-        network = {
-          nameservers = local.dns_servers
-        }
-      }
-    })
-  ]
-}
-
 # ----------------------------------------------------------------------
 # 6. Apply configurations to nodes
 # ----------------------------------------------------------------------
@@ -271,14 +148,6 @@ resource "talos_machine_configuration_apply" "controlplane" {
   machine_configuration_input = data.talos_machine_configuration.controlplane.machine_configuration
   client_configuration        = talos_machine_secrets.this.client_configuration
   depends_on                  = [time_sleep.wait_for_vms]
-}
-
-resource "talos_machine_configuration_apply" "worker" {
-  count                       = length(local.worker_ips)
-  node                        = local.worker_ips[count.index]
-  machine_configuration_input = data.talos_machine_configuration.worker[count.index].machine_configuration
-  client_configuration        = talos_machine_secrets.this.client_configuration
-  depends_on                  = [talos_machine_configuration_apply.controlplane]
 }
 
 # ----------------------------------------------------------------------
@@ -337,7 +206,11 @@ resource "null_resource" "fetch_kubeconfig" {
     EOT
     interpreter = ["/bin/bash", "-c"]
   }
-  triggers = { always_run = timestamp() }
+
+  # Updated to use a stable value, preventing forced replacement on every plan
+  triggers = {
+    cluster_endpoint = local.cluster_endpoint
+  }
 }
 
 # ----------------------------------------------------------------------

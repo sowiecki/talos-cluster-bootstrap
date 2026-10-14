@@ -1,4 +1,10 @@
 customization:
   systemExtensions:
     officialExtensions:
+      - siderolabs/iscsi-tools
+      - siderolabs/util-linux-tools
       - siderolabs/qemu-guest-agent
+      - siderolabs/usb-modem-drivers      # Optional: for MeshCore modems
+  extraKernelArgs:
+    - console=tty0
+    - console=ttyS0
