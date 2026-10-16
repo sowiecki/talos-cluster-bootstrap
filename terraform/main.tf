@@ -81,7 +81,11 @@ resource "proxmox_virtual_environment_vm" "control_plane" {
 resource "time_sleep" "wait_for_vms" {
   depends_on = [
     proxmox_virtual_environment_vm.control_plane,
-    proxmox_virtual_environment_vm.worker
+    proxmox_virtual_environment_vm.worker_1,
+    proxmox_virtual_environment_vm.worker_2,
+    proxmox_virtual_environment_vm.worker_3,
+    proxmox_virtual_environment_vm.worker_4,
+    proxmox_virtual_environment_vm.worker_5,
   ]
   create_duration = "60s"
 }

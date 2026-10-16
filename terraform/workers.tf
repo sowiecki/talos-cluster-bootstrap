@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------
-# Talos installer schematic for storage-capable workers
+# Talos installer schematics
 # ----------------------------------------------------------------------
 resource "talos_image_factory_schematic" "worker5" {
   schematic = yamlencode({
@@ -17,58 +17,37 @@ resource "talos_image_factory_schematic" "worker5" {
 }
 
 # ----------------------------------------------------------------------
-# Worker VMs
+# Worker VMs - Explicit declarations
 # ----------------------------------------------------------------------
-resource "proxmox_virtual_environment_vm" "worker" {
-  for_each = local.workers
 
-  depends_on = [
-    talos_image_factory_schematic.this,
-    talos_image_factory_schematic.worker5,
-  ]
-
-  name      = "${local.cluster_name}-${each.key}"
-  node_name = each.value.proxmox_node
-  tags = length(each.value.longhorn_disks) > 0 ? [
-    "talos", "worker", "storage-local-block",
-    ] : [
-    "talos", "worker",
-  ]
-  started = true
-  vm_id   = each.value.vm_id
+resource "proxmox_virtual_environment_vm" "worker_1" {
+  name      = "${local.cluster_name}-worker-1"
+  node_name = "pve02"
+  tags      = ["talos", "worker"]
+  started   = true
+  vm_id     = 106
 
   cpu {
-    cores = each.value.cores
+    cores = 10
     type  = "host"
   }
 
   memory {
-    dedicated = each.value.memory
+    dedicated = 14000
   }
 
   disk {
     datastore_id = "local-lvm"
     interface    = "scsi0"
-    size         = each.value.os_disk_size
+    size         = 950
     file_format  = "raw"
-    file_id      = "local:iso/talos-v1.13.11-nocloud-amd64.raw.img"
-  }
-
-  dynamic "disk" {
-    for_each = each.value.longhorn_disks
-    content {
-      datastore_id = disk.value.datastore
-      interface    = disk.key
-      size         = disk.value.size
-      file_format  = "raw"
-      serial       = "longhorn-${disk.key}"
-    }
+    file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
   }
 
   network_device {
     bridge      = local.bridge
     model       = "virtio"
-    mac_address = each.value.mac_address
+    mac_address = "BC:24:11:00:00:62"
   }
 
   agent {
@@ -83,7 +62,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${each.value.ip}/24"
+        address = "192.168.1.62/24"
         gateway = local.gateway
       }
     }
@@ -97,103 +76,534 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 }
 
-# ----------------------------------------------------------------------
-# Talos machine configuration per worker
-# ----------------------------------------------------------------------
-data "talos_machine_configuration" "worker" {
-  for_each = local.workers
+resource "proxmox_virtual_environment_vm" "worker_2" {
+  name      = "${local.cluster_name}-worker-2"
+  node_name = "pve03"
+  tags      = ["talos", "worker"]
+  started   = true
+  vm_id     = 107
 
+  cpu {
+    cores = 10
+    type  = "host"
+  }
+
+  memory {
+    dedicated = 14000
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 950
+    file_format  = "raw"
+    file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
+  }
+
+  network_device {
+    bridge      = local.bridge
+    model       = "virtio"
+    mac_address = "BC:24:11:00:00:63"
+  }
+
+  agent {
+    enabled = true
+    timeout = "15s"
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "192.168.1.63/24"
+        gateway = local.gateway
+      }
+    }
+    dns {
+      servers = local.dns_servers
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [disk, initialization, agent]
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "worker_3" {
+  name      = "${local.cluster_name}-worker-3"
+  node_name = "pve04"
+  tags      = ["talos", "worker"]
+  started   = true
+  vm_id     = 108
+
+  cpu {
+    cores = 6
+    type  = "host"
+  }
+
+  memory {
+    dedicated = 14000
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 950
+    file_format  = "raw"
+    file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
+  }
+
+  network_device {
+    bridge      = local.bridge
+    model       = "virtio"
+    mac_address = "BC:24:11:00:00:64"
+  }
+
+  agent {
+    enabled = true
+    timeout = "15s"
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "192.168.1.64/24"
+        gateway = local.gateway
+      }
+    }
+    dns {
+      servers = local.dns_servers
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [disk, initialization, agent]
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "worker_4" {
+  name      = "${local.cluster_name}-worker-4"
+  node_name = "pve05"
+  tags      = ["talos", "worker"]
+  started   = true
+  vm_id     = 110
+
+  cpu {
+    cores = 10
+    type  = "host"
+  }
+
+  memory {
+    dedicated = 18432
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 950
+    file_format  = "raw"
+    file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
+  }
+
+  network_device {
+    bridge      = local.bridge
+    model       = "virtio"
+    mac_address = "BC:24:11:00:00:65"
+  }
+
+  agent {
+    enabled = true
+    timeout = "15s"
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "192.168.1.71/24"
+        gateway = local.gateway
+      }
+    }
+    dns {
+      servers = local.dns_servers
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [disk, initialization, agent]
+  }
+}
+
+resource "proxmox_virtual_environment_vm" "worker_5" {
+  name      = "${local.cluster_name}-worker-5"
+  node_name = "pve06"
+  tags      = ["talos", "worker", "storage-local-block"]
+  started   = true
+  vm_id     = 111
+
+  cpu {
+    cores = 6
+    type  = "host"
+  }
+
+  memory {
+    dedicated = 12288
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi0"
+    size         = 32
+    file_format  = "raw"
+    file_id      = "local:iso/talos-v1.13.11-nocloud-amd64.raw.img"
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    interface    = "scsi1"
+    size         = 260
+    file_format  = "raw"
+  }
+
+  disk {
+    datastore_id = "longhorn-lvm"
+    interface    = "scsi2"
+    size         = 110
+    file_format  = "raw"
+  }
+
+  disk {
+    datastore_id = "longhorn-lvm"
+    interface    = "scsi3"
+    size         = 110
+    file_format  = "raw"
+  }
+
+  disk {
+    datastore_id = "longhorn-lvm"
+    interface    = "scsi4"
+    size         = 110
+    file_format  = "raw"
+  }
+
+  network_device {
+    bridge      = local.bridge
+    model       = "virtio"
+    mac_address = "BC:24:11:00:00:72"
+  }
+
+  agent {
+    enabled = true
+    timeout = "15s"
+  }
+
+  operating_system {
+    type = "l26"
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "192.168.1.75/24"
+        gateway = local.gateway
+      }
+    }
+    dns {
+      servers = local.dns_servers
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [initialization, agent]
+  }
+}
+
+# ----------------------------------------------------------------------
+# Talos machine configurations - Explicit declarations
+# ----------------------------------------------------------------------
+
+data "talos_machine_configuration" "worker_1" {
   cluster_name       = local.cluster_name
   cluster_endpoint   = local.cluster_endpoint
   machine_type       = "worker"
   machine_secrets    = talos_machine_secrets.this.machine_secrets
-  talos_version      = local.worker_talos_version[each.key]
+  talos_version      = "v1.13.0"
   kubernetes_version = "1.35.0"
 
-  config_patches = concat(
-    [
-      # Base worker configuration
-      yamlencode({
-        machine = {
-          install = { disk = "/dev/sda" }
-          time    = { servers = ["pool.ntp.org"] }
-          network = {
-            nameservers = local.dns_servers
-            interfaces = [{
-              interface = "eth0"
-              addresses = ["${each.value.ip}/24"]
-              routes    = [{ network = "0.0.0.0/0", gateway = local.gateway }]
-            }]
-          }
-          kubelet = {
-            extraArgs = merge(
-              { node-ip = each.value.ip },
-              length(local.worker_labels[each.key]) > 0 ? {
-                "node-labels" = join(",", local.worker_labels[each.key])
-              } : {},
-              each.value.kubelet_args,
-            )
+  config_patches = [
+    yamlencode({
+      machine = {
+        install = { disk = "/dev/sda" }
+        time    = { servers = ["pool.ntp.org"] }
+        network = {
+          nameservers = local.dns_servers
+          interfaces = [{
+            interface = "eth0"
+            addresses = ["192.168.1.62/24"]
+            routes    = [{ network = "0.0.0.0/0", gateway = local.gateway }]
+          }]
+        }
+        kubelet = {
+          extraArgs = { node-ip = "192.168.1.62" }
+        }
+      }
+      cluster = { network = { cni = { name = "none" } } }
+    })
+  ]
+}
+
+data "talos_machine_configuration" "worker_2" {
+  cluster_name       = local.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = "v1.13.0"
+  kubernetes_version = "1.35.0"
+
+  config_patches = [
+    yamlencode({
+      machine = {
+        install = { disk = "/dev/sda" }
+        time    = { servers = ["pool.ntp.org"] }
+        network = {
+          nameservers = local.dns_servers
+          interfaces = [{
+            interface = "eth0"
+            addresses = ["192.168.1.63/24"]
+            routes    = [{ network = "0.0.0.0/0", gateway = local.gateway }]
+          }]
+        }
+        kubelet = {
+          extraArgs = { node-ip = "192.168.1.63" }
+        }
+      }
+      cluster = { network = { cni = { name = "none" } } }
+    })
+  ]
+}
+
+data "talos_machine_configuration" "worker_3" {
+  cluster_name       = local.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = "v1.13.0"
+  kubernetes_version = "1.35.0"
+
+  config_patches = [
+    yamlencode({
+      machine = {
+        install = { disk = "/dev/sda" }
+        time    = { servers = ["pool.ntp.org"] }
+        network = {
+          nameservers = local.dns_servers
+          interfaces = [{
+            interface = "eth0"
+            addresses = ["192.168.1.64/24"]
+            routes    = [{ network = "0.0.0.0/0", gateway = local.gateway }]
+          }]
+        }
+        kubelet = {
+          extraArgs = { node-ip = "192.168.1.64" }
+        }
+      }
+      cluster = { network = { cni = { name = "none" } } }
+    })
+  ]
+}
+
+data "talos_machine_configuration" "worker_4" {
+  cluster_name       = local.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = "v1.13.0"
+  kubernetes_version = "1.35.0"
+
+  config_patches = [
+    yamlencode({
+      machine = {
+        install = { disk = "/dev/sda" }
+        time    = { servers = ["pool.ntp.org"] }
+        network = {
+          nameservers = local.dns_servers
+          interfaces = [{
+            interface = "eth0"
+            addresses = ["192.168.1.71/24"]
+            routes    = [{ network = "0.0.0.0/0", gateway = local.gateway }]
+          }]
+        }
+        kubelet = {
+          extraArgs = {
+            node-ip       = "192.168.1.71"
+            "max-pods"    = "250"
+            "node-labels" = "node-class=performance"
           }
         }
-        cluster = { network = { cni = { name = "none" } } }
-      }),
-    ],
-    # Explicit, readable Longhorn disk declarations for worker-5
-    # No dynamic loops, no complex calculations. Just clear, explicit intent.
-    # (Note: .machine.disks shows a deprecation warning in 1.13, but remains
-    # fully functional and is the most readable way to explicitly declare mounts).
-    each.key == "worker-5" ? [
-      yamlencode({
-        machine = {
-          disks = [
-            { device = "/dev/sdb", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi1", size = 0 }] },
-            { device = "/dev/sdc", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi2", size = 0 }] },
-            { device = "/dev/sdd", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi3", size = 0 }] },
-            { device = "/dev/sde", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi4", size = 0 }] }
-          ]
+        sysctls = {
+          "net.netfilter.nf_conntrack_max" = "1048576"
+          "net.core.netdev_max_backlog"    = "5000"
         }
-      })
-    ] : []
-  )
+      }
+      cluster = { network = { cni = { name = "none" } } }
+    })
+  ]
+}
+
+data "talos_machine_configuration" "worker_5" {
+  cluster_name       = local.cluster_name
+  cluster_endpoint   = local.cluster_endpoint
+  machine_type       = "worker"
+  machine_secrets    = talos_machine_secrets.this.machine_secrets
+  talos_version      = "v1.13.11"
+  kubernetes_version = "1.35.0"
+
+  config_patches = [
+    yamlencode({
+      machine = {
+        install = {
+          disk  = "/dev/sda"
+          image = "factory.talos.dev/installer/${talos_image_factory_schematic.worker5.id}:v1.13.11"
+        }
+        time = { servers = ["pool.ntp.org"] }
+        network = {
+          nameservers = local.dns_servers
+          interfaces = [{
+            interface = "eth0"
+            addresses = ["192.168.1.75/24"]
+            routes    = [{ network = "0.0.0.0/0", gateway = local.gateway }]
+          }]
+        }
+        kubelet = {
+          extraArgs = {
+            node-ip       = "192.168.1.75"
+            "node-labels" = "storage.capability=local-block,node.longhorn.io/create-default-disk=config"
+          }
+        }
+        disks = [
+          { device = "/dev/sdb", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi1", size = 0 }] },
+          { device = "/dev/sdc", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi2", size = 0 }] },
+          { device = "/dev/sdd", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi3", size = 0 }] },
+          { device = "/dev/sde", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi4", size = 0 }] }
+        ]
+      }
+      cluster = { network = { cni = { name = "none" } } }
+    })
+  ]
 }
 
 # ----------------------------------------------------------------------
-# Apply config to each worker
+# Apply configurations to each worker
 # ----------------------------------------------------------------------
-resource "talos_machine_configuration_apply" "worker" {
-  for_each = local.workers
 
-  node                        = each.value.ip
-  machine_configuration_input = data.talos_machine_configuration.worker[each.key].machine_configuration
+resource "talos_machine_configuration_apply" "worker_1" {
+  node                        = "192.168.1.62"
+  machine_configuration_input = data.talos_machine_configuration.worker_1.machine_configuration
   client_configuration        = talos_machine_secrets.this.client_configuration
+  depends_on                  = [talos_machine_configuration_apply.controlplane]
+}
 
-  depends_on = [talos_machine_configuration_apply.controlplane]
+resource "talos_machine_configuration_apply" "worker_2" {
+  node                        = "192.168.1.63"
+  machine_configuration_input = data.talos_machine_configuration.worker_2.machine_configuration
+  client_configuration        = talos_machine_secrets.this.client_configuration
+  depends_on                  = [talos_machine_configuration_apply.controlplane]
+}
+
+resource "talos_machine_configuration_apply" "worker_3" {
+  node                        = "192.168.1.64"
+  machine_configuration_input = data.talos_machine_configuration.worker_3.machine_configuration
+  client_configuration        = talos_machine_secrets.this.client_configuration
+  depends_on                  = [talos_machine_configuration_apply.controlplane]
+}
+
+resource "talos_machine_configuration_apply" "worker_4" {
+  node                        = "192.168.1.71"
+  machine_configuration_input = data.talos_machine_configuration.worker_4.machine_configuration
+  client_configuration        = talos_machine_secrets.this.client_configuration
+  depends_on                  = [talos_machine_configuration_apply.controlplane]
+}
+
+resource "talos_machine_configuration_apply" "worker_5" {
+  node                        = "192.168.1.75"
+  machine_configuration_input = data.talos_machine_configuration.worker_5.machine_configuration
+  client_configuration        = talos_machine_secrets.this.client_configuration
+  depends_on                  = [talos_machine_configuration_apply.controlplane]
 }
 
 # ----------------------------------------------------------------------
-# Ensure Longhorn-required labels are present on nodes with storage.
-#
-# workers.tf intends to set these via kubelet extraArgs.node-labels, but
-# that block is not reliably rendered into the machine configuration by
-# the Talos provider. This resource enforces the same labels at the
-# Kubernetes level. Both mechanisms can coexist: kubelet applies them on
-# join, this resource ensures they persist.
+# Longhorn labels and Node CRD - Explicit declarations
 # ----------------------------------------------------------------------
-resource "kubernetes_labels" "worker_longhorn" {
-  for_each = {
-    for name, w in local.workers : name => w
-    if length(w.longhorn_disks) > 0
-  }
 
+resource "kubernetes_labels" "worker_5_longhorn" {
+  force       = true
   api_version = "v1"
   kind        = "Node"
 
   metadata {
-    name = "${local.cluster_name}-${each.key}"
+    name = "${local.cluster_name}-worker-5"
   }
 
   labels = {
     "storage.capability"                   = "local-block"
     "node.longhorn.io/create-default-disk" = "config"
   }
+}
+
+resource "kubernetes_manifest" "worker_5_longhorn_node" {
+  manifest = {
+    apiVersion = "longhorn.io/v1beta2"
+    kind       = "Node"
+    metadata = {
+      name      = "${local.cluster_name}-worker-5"
+      namespace = "longhorn-system"
+    }
+    spec = {
+      allowScheduling   = true
+      evictionRequested = false
+      tags              = []
+      disks = {
+        "longhorn-scsi1" = {
+          path            = "/var/mnt/longhorn-scsi1"
+          allowScheduling = true
+          storageReserved = 0
+          tags            = []
+        }
+        "longhorn-scsi2" = {
+          path            = "/var/mnt/longhorn-scsi2"
+          allowScheduling = true
+          storageReserved = 0
+          tags            = []
+        }
+        "longhorn-scsi3" = {
+          path            = "/var/mnt/longhorn-scsi3"
+          allowScheduling = true
+          storageReserved = 0
+          tags            = []
+        }
+        "longhorn-scsi4" = {
+          path            = "/var/mnt/longhorn-scsi4"
+          allowScheduling = true
+          storageReserved = 0
+          tags            = []
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    talos_machine_configuration_apply.worker_5,
+    kubernetes_labels.worker_5_longhorn,
+    helm_release.longhorn
+  ]
 }
