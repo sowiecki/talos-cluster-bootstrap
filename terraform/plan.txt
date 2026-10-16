@@ -1,0 +1,271 @@
+[0m[1mtalos_image_factory_schematic.worker5: Refreshing state... [id=9bac75bf3281bc14deb653af9190d7d2beb1b677dfe63bb902d410aef8cc6c05][0m
+[0m[1mtalos_image_factory_schematic.this: Refreshing state... [id=2c0ae4aaed27a9d7e0d018ab4ad8c1c3de97baba0bd5456953508e4d0543ee99][0m
+[0m[1mtalos_machine_secrets.this: Refreshing state... [id=machine_secrets][0m
+[0m[1mproxmox_virtual_environment_vm.worker["worker-2"]: Refreshing state... [id=107][0m
+[0m[1mproxmox_virtual_environment_vm.worker["worker-3"]: Refreshing state... [id=108][0m
+[0m[1mproxmox_virtual_environment_vm.control_plane: Refreshing state... [id=105][0m
+[0m[1mproxmox_virtual_environment_vm.worker["worker-4"]: Refreshing state... [id=110][0m
+[0m[1mproxmox_virtual_environment_vm.worker["worker-1"]: Refreshing state... [id=106][0m
+[0m[1mdata.talos_client_configuration.this: Reading...[0m[0m
+[0m[1mdata.talos_machine_configuration.controlplane: Reading...[0m[0m
+[0m[1mproxmox_virtual_environment_vm.worker["worker-5"]: Refreshing state... [id=111][0m
+[0m[1mdata.talos_machine_configuration.worker["worker-5"]: Reading...[0m[0m
+[0m[1mdata.talos_machine_configuration.worker["worker-3"]: Reading...[0m[0m
+[0m[1mdata.talos_client_configuration.this: Read complete after 0s [id=nase-dev-prod][0m
+[0m[1mdata.talos_machine_configuration.worker["worker-1"]: Reading...[0m[0m
+[0m[1mdata.talos_machine_configuration.worker["worker-5"]: Read complete after 0s [id=nase-dev-prod][0m
+[0m[1mdata.talos_machine_configuration.worker["worker-3"]: Read complete after 0s [id=nase-dev-prod][0m
+[0m[1mdata.talos_machine_configuration.controlplane: Read complete after 0s [id=nase-dev-prod][0m
+[0m[1mdata.talos_machine_configuration.worker["worker-4"]: Reading...[0m[0m
+[0m[1mlocal_file.talosconfig: Refreshing state... [id=4121d6300f9932d63a8fe786ab8fc53960a8fbf9][0m
+[0m[1mdata.talos_machine_configuration.worker["worker-2"]: Reading...[0m[0m
+[0m[1mdata.talos_machine_configuration.worker["worker-1"]: Read complete after 0s [id=nase-dev-prod][0m
+[0m[1mdata.talos_machine_configuration.worker["worker-4"]: Read complete after 0s [id=nase-dev-prod][0m
+[0m[1mdata.talos_machine_configuration.worker["worker-2"]: Read complete after 0s [id=nase-dev-prod][0m
+[0m[1mtime_sleep.wait_for_vms: Refreshing state... [id=2026-04-08T02:55:41Z][0m
+[0m[1mtalos_machine_configuration_apply.controlplane: Refreshing state... [id=machine_configuration_apply][0m
+[0m[1mtalos_machine_bootstrap.controlplane: Refreshing state... [id=machine_bootstrap][0m
+[0m[1mtalos_machine_configuration_apply.worker["worker-2"]: Refreshing state... [id=machine_configuration_apply][0m
+[0m[1mtalos_machine_configuration_apply.worker["worker-3"]: Refreshing state... [id=machine_configuration_apply][0m
+[0m[1mtalos_machine_configuration_apply.worker["worker-4"]: Refreshing state... [id=machine_configuration_apply][0m
+[0m[1mtalos_machine_configuration_apply.worker["worker-1"]: Refreshing state... [id=machine_configuration_apply][0m
+[0m[1mtalos_machine_configuration_apply.worker["worker-5"]: Refreshing state... [id=machine_configuration_apply][0m
+[0m[1mtime_sleep.wait_for_bootstrap: Refreshing state... [id=2026-06-14T22:31:20Z][0m
+[0m[1mnull_resource.fetch_kubeconfig: Refreshing state... [id=6648983709833009460][0m
+[0m[1mdata.local_file.kubeconfig: Reading...[0m[0m
+[0m[1mhelm_release.cilium: Refreshing state... [id=cilium][0m
+[0m[1mdata.local_file.kubeconfig: Read complete after 0s [id=94675da75e5f441365b975beefb11269eefb435e][0m
+[0m[1mkubernetes_namespace.longhorn_system: Refreshing state... [id=longhorn-system][0m
+[0m[1mhelm_release.longhorn: Refreshing state... [id=longhorn][0m
+[0m[1mtime_sleep.wait_for_nodes_ready: Refreshing state... [id=2026-04-08T03:09:43Z][0m
+[0m[1mhelm_release.nfs_csi: Refreshing state... [id=nfs-csi][0m
+[0m[1mnull_resource.wait_for_api: Refreshing state... [id=1425205157459460224][0m
+[0m[1mterraform_data.metallb_manifests: Refreshing state... [id=4311805f-dd25-0c02-1b6e-57c1de474e8d][0m
+[0m[1mterraform_data.wait_for_crds: Refreshing state... [id=815c28cf-6c11-e7db-5feb-4ad06c0c0722][0m
+[0m[1mterraform_data.metallb_config_content: Refreshing state... [id=647e60ee-3d5c-0999-ba0f-d6db0ebad4e3][0m
+[0m[1mterraform_data.apply_metallb_config: Refreshing state... [id=c0589c7b-eff3-5f94-618a-6dbef4a0ea1b][0m
+[0m[1mtime_sleep.wait_after_metallb: Refreshing state... [id=2026-04-08T03:10:36Z][0m
+[0m[1mhelm_release.ingress_nginx: Refreshing state... [id=ingress-nginx][0m
+[0m[1mkubernetes_manifest.allow_dns_egress: Refreshing state...[0m
+[0m[1mkubernetes_storage_class.longhorn_sc: Refreshing state... [id=longhorn-sc][0m
+[0m[1mdata.kubernetes_service.ingress_nginx: Reading...[0m[0m
+[0m[1mdata.kubernetes_service.ingress_nginx: Read complete after 0s [id=ingress-nginx/ingress-nginx-controller][0m
+
+OpenTofu used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [33m~[0m update in-place (current -> planned)[0m
+
+OpenTofu will perform the following actions:
+
+[1m  # helm_release.longhorn[0m will be updated in-place
+[0m  [33m~[0m[0m resource "helm_release" "longhorn" {
+        id                         = "longhorn"
+      [33m~[0m[0m metadata                   = [
+          [31m-[0m[0m {
+              [31m-[0m[0m app_version    = "v1.7.2"
+              [31m-[0m[0m chart          = "longhorn"
+              [31m-[0m[0m first_deployed = 1791936623
+              [31m-[0m[0m last_deployed  = 1791937350
+              [31m-[0m[0m name           = "longhorn"
+              [31m-[0m[0m namespace      = "longhorn-system"
+              [31m-[0m[0m notes          = <<-EOT
+                    Longhorn is now installed on the cluster!
+                    
+                    Please wait a few minutes for other Longhorn components such as CSI deployments, Engine Images, and Instance Managers to be initialized.
+                    
+                    Visit our documentation at https://longhorn.io/docs/
+                EOT
+              [31m-[0m[0m revision       = 3
+              [31m-[0m[0m values         = jsonencode(
+                    {
+                      [31m-[0m[0m defaultSettings          = {
+                          [31m-[0m[0m defaultNodeSelector                 = "storage.capability=local-block"
+                          [31m-[0m[0m defaultReplicaCount                 = 1
+                          [31m-[0m[0m replicaAutoBalance                  = "least-effort"
+                          [31m-[0m[0m systemManagedComponentsNodeSelector = "storage.capability=local-block"
+                          [31m-[0m[0m taintToleration                     = "storage=local-block:NoSchedule"
+                        }
+                      [31m-[0m[0m longhornAdmissionWebhook = {
+                          [31m-[0m[0m nodeSelector = {
+                              [31m-[0m[0m "storage.capability" = "local-block"
+                            }
+                          [31m-[0m[0m tolerations  = [
+                              [31m-[0m[0m {
+                                  [31m-[0m[0m effect   = "NoSchedule"
+                                  [31m-[0m[0m key      = "storage"
+                                  [31m-[0m[0m operator = "Equal"
+                                  [31m-[0m[0m value    = "local-block"
+                                },
+                            ]
+                        }
+                      [31m-[0m[0m longhornDriver           = {
+                          [31m-[0m[0m nodeSelector = {
+                              [31m-[0m[0m "storage.capability" = "local-block"
+                            }
+                          [31m-[0m[0m resources    = {
+                              [31m-[0m[0m limits   = {
+                                  [31m-[0m[0m cpu    = "200m"
+                                  [31m-[0m[0m memory = "256Mi"
+                                }
+                              [31m-[0m[0m requests = {
+                                  [31m-[0m[0m cpu    = "50m"
+                                  [31m-[0m[0m memory = "64Mi"
+                                }
+                            }
+                          [31m-[0m[0m tolerations  = [
+                              [31m-[0m[0m {
+                                  [31m-[0m[0m effect   = "NoSchedule"
+                                  [31m-[0m[0m key      = "storage"
+                                  [31m-[0m[0m operator = "Equal"
+                                  [31m-[0m[0m value    = "local-block"
+                                },
+                            ]
+                        }
+                      [31m-[0m[0m longhornManager          = {
+                          [31m-[0m[0m nodeSelector = {
+                              [31m-[0m[0m "storage.capability" = "local-block"
+                            }
+                          [31m-[0m[0m resources    = {
+                              [31m-[0m[0m limits   = {
+                                  [31m-[0m[0m cpu    = "500m"
+                                  [31m-[0m[0m memory = "512Mi"
+                                }
+                              [31m-[0m[0m requests = {
+                                  [31m-[0m[0m cpu    = "100m"
+                                  [31m-[0m[0m memory = "128Mi"
+                                }
+                            }
+                          [31m-[0m[0m tolerations  = [
+                              [31m-[0m[0m {
+                                  [31m-[0m[0m effect   = "NoSchedule"
+                                  [31m-[0m[0m key      = "storage"
+                                  [31m-[0m[0m operator = "Equal"
+                                  [31m-[0m[0m value    = "local-block"
+                                },
+                            ]
+                        }
+                      [31m-[0m[0m longhornRecoveryBackend  = {
+                          [31m-[0m[0m nodeSelector = {
+                              [31m-[0m[0m "storage.capability" = "local-block"
+                            }
+                          [31m-[0m[0m tolerations  = [
+                              [31m-[0m[0m {
+                                  [31m-[0m[0m effect   = "NoSchedule"
+                                  [31m-[0m[0m key      = "storage"
+                                  [31m-[0m[0m operator = "Equal"
+                                  [31m-[0m[0m value    = "local-block"
+                                },
+                            ]
+                        }
+                      [31m-[0m[0m longhornUI               = {
+                          [31m-[0m[0m nodeSelector = {
+                              [31m-[0m[0m "storage.capability" = "local-block"
+                            }
+                          [31m-[0m[0m tolerations  = [
+                              [31m-[0m[0m {
+                                  [31m-[0m[0m effect   = "NoSchedule"
+                                  [31m-[0m[0m key      = "storage"
+                                  [31m-[0m[0m operator = "Equal"
+                                  [31m-[0m[0m value    = "local-block"
+                                },
+                            ]
+                        }
+                      [31m-[0m[0m persistence              = {
+                          [31m-[0m[0m defaultClass           = false
+                          [31m-[0m[0m defaultDataPathEnabled = false
+                        }
+                    }
+                )
+              [31m-[0m[0m version        = "1.7.2"
+            },
+        ] -> (known after apply)
+        name                       = "longhorn"
+      [33m~[0m[0m values                     = [
+          [33m~[0m[0m <<-EOT
+                "defaultSettings":
+                  "defaultNodeSelector": "storage.capability=local-block"
+                  "defaultReplicaCount": 1
+                  "replicaAutoBalance": "least-effort"
+              [31m-[0m[0m   "systemManagedComponentsNodeSelector": "storage.capability=local-block"
+              [31m-[0m[0m   "taintToleration": "storage=local-block:NoSchedule"
+                "longhornAdmissionWebhook":
+                  "nodeSelector":
+                    "storage.capability": "local-block"
+              [31m-[0m[0m   "tolerations":
+              [31m-[0m[0m   - "effect": "NoSchedule"
+              [31m-[0m[0m     "key": "storage"
+              [31m-[0m[0m     "operator": "Equal"
+              [31m-[0m[0m     "value": "local-block"
+                "longhornDriver":
+                  "nodeSelector":
+                    "storage.capability": "local-block"
+                  "resources":
+                    "limits":
+                      "cpu": "200m"
+                      "memory": "256Mi"
+                    "requests":
+                      "cpu": "50m"
+                      "memory": "64Mi"
+              [31m-[0m[0m   "tolerations":
+              [31m-[0m[0m   - "effect": "NoSchedule"
+              [31m-[0m[0m     "key": "storage"
+              [31m-[0m[0m     "operator": "Equal"
+              [31m-[0m[0m     "value": "local-block"
+                "longhornManager":
+                  "nodeSelector":
+                    "storage.capability": "local-block"
+                  "resources":
+                    "limits":
+                      "cpu": "500m"
+                      "memory": "512Mi"
+                    "requests":
+                      "cpu": "100m"
+                      "memory": "128Mi"
+              [31m-[0m[0m   "tolerations":
+              [31m-[0m[0m   - "effect": "NoSchedule"
+              [31m-[0m[0m     "key": "storage"
+              [31m-[0m[0m     "operator": "Equal"
+              [31m-[0m[0m     "value": "local-block"
+                "longhornRecoveryBackend":
+                  "nodeSelector":
+                    "storage.capability": "local-block"
+              [31m-[0m[0m   "tolerations":
+              [31m-[0m[0m   - "effect": "NoSchedule"
+              [31m-[0m[0m     "key": "storage"
+              [31m-[0m[0m     "operator": "Equal"
+              [31m-[0m[0m     "value": "local-block"
+                "longhornUI":
+                  "nodeSelector":
+                    "storage.capability": "local-block"
+              [31m-[0m[0m   "tolerations":
+              [31m-[0m[0m   - "effect": "NoSchedule"
+              [31m-[0m[0m     "key": "storage"
+              [31m-[0m[0m     "operator": "Equal"
+              [31m-[0m[0m     "value": "local-block"
+                "persistence":
+                  "defaultClass": false
+                  "defaultDataPathEnabled": false
+            EOT,
+        ]
+        [90m# (26 unchanged attributes hidden)[0m[0m
+    }
+
+[1m  # talos_machine_configuration_apply.worker["worker-5"][0m will be updated in-place
+[0m  [33m~[0m[0m resource "talos_machine_configuration_apply" "worker" {
+      [33m~[0m[0m client_configuration_wo        = (write-only attribute)
+        id                             = "machine_configuration_apply"
+      [33m~[0m[0m machine_configuration          = (sensitive value)
+      [33m~[0m[0m machine_configuration_hash     = "3d1ee6313fd754dff17fe4c74cb543bcc50ed352e07c2c148d2a115f3e786220" [33m->[0m[0m "3b55e87c7491cee58b061fe073d8e2b79be938038285b98be2df7fce02142989"
+      [33m~[0m[0m machine_configuration_input    = (sensitive value)
+      [33m~[0m[0m machine_configuration_input_wo = (write-only attribute)
+        [90m# (5 unchanged attributes hidden)[0m[0m
+    }
+
+[1mPlan:[0m 0 to add, 2 to change, 0 to destroy.
+[0m[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Saved the plan to: untTaint.tfplan
+
+To perform exactly these actions, run the following command to apply:
+    tofu apply "untTaint.tfplan"

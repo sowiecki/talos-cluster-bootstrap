@@ -87,7 +87,7 @@ locals {
     }
     worker-5 = {
       proxmox_node = "pve06"
-      ip           = "192.168.1.72"
+      ip           = "192.168.1.75"
       vm_id        = 111
       mac_address  = "BC:24:11:00:00:72"
       cores        = 6
@@ -104,7 +104,8 @@ locals {
       }
       # v1.13.3+ fixes the iscsi-tools path regression. Use the latest
       # v1.13.x patch that also includes the open-iscsi 2.1.12 fix.
-      talos_version_override = "v1.13.9"
+      # talos_version_override = "v1.13.9"
+      talos_version_override = "v1.13.11"
     }
   }
 

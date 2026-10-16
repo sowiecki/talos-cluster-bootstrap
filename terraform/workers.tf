@@ -51,7 +51,6 @@ resource "proxmox_virtual_environment_vm" "worker" {
     interface    = "scsi0"
     size         = each.value.os_disk_size
     file_format  = "raw"
-    # file_id      = "local:iso/talos-v1.13.0-nocloud-amd64.raw.img"
     file_id      = "local:iso/talos-v1.13.11-nocloud-amd64.raw.img"
   }
 
@@ -62,6 +61,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
       interface    = disk.key
       size         = disk.value.size
       file_format  = "raw"
+      serial       = "longhorn-${disk.key}"
     }
   }
 
@@ -72,7 +72,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   agent {
-    enabled = false
+    enabled = true
     timeout = "15s"
   }
 
@@ -93,7 +93,7 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   lifecycle {
-    ignore_changes = [disk, initialization]
+    ignore_changes = [disk, initialization, agent]
   }
 }
 
@@ -112,69 +112,44 @@ data "talos_machine_configuration" "worker" {
 
   config_patches = concat(
     [
-      yamlencode({
-        machine = merge(
-          {
-            install = merge(
-              { disk = "/dev/sda" },
-              length(each.value.longhorn_disks) > 0 ? {
-                image = "factory.talos.dev/installer/${talos_image_factory_schematic.worker5.id}:${local.worker_talos_version[each.key]}"
-              } : {}
-            )
-
-            time = { servers = ["pool.ntp.org"] }
-
-            kubelet = {
-              extraArgs = merge(
-                { node-ip = each.value.ip },
-                length(local.worker_labels[each.key]) > 0 ? {
-                  "node-labels" = join(",", local.worker_labels[each.key])
-                } : {},
-                each.value.kubelet_args,
-              )
-            }
-
-            sysctls = merge(
-              {
-                "vm.max_map_count"   = "262144"
-                "net.core.somaxconn" = "4096"
-              },
-              each.value.sysctls,
-            )
-          },
-
-          length(each.value.longhorn_disks) > 0 ? {
-            nodeAnnotations = {
-              "node.longhorn.io/default-disks-config" = jsonencode([
-                for slot, spec in each.value.longhorn_disks : {
-                  path            = "/var/mnt/longhorn-${slot}"
-                  allowScheduling = true
-                }
-              ])
-            }
-          } : {}
-        )
-
-        cluster = {
-          network = { cni = { name = "none" } }
-        }
-      }),
-
+      # Base worker configuration
       yamlencode({
         machine = {
-          network = { nameservers = local.dns_servers }
+          install = { disk = "/dev/sda" }
+          time    = { servers = ["pool.ntp.org"] }
+          network = {
+            nameservers = local.dns_servers
+            interfaces = [{
+              interface = "eth0"
+              addresses = ["${each.value.ip}/24"]
+              routes    = [{ network = "0.0.0.0/0", gateway = local.gateway }]
+            }]
+          }
+          kubelet = {
+            extraArgs = merge(
+              { node-ip = each.value.ip },
+              length(local.worker_labels[each.key]) > 0 ? {
+                "node-labels" = join(",", local.worker_labels[each.key])
+              } : {},
+              each.value.kubelet_args,
+            )
+          }
         }
+        cluster = { network = { cni = { name = "none" } } }
       }),
     ],
-
-    length(each.value.longhorn_disks) > 0 ? [
+    # Explicit, readable Longhorn disk declarations for worker-5
+    # No dynamic loops, no complex calculations. Just clear, explicit intent.
+    # (Note: .machine.disks shows a deprecation warning in 1.13, but remains
+    # fully functional and is the most readable way to explicitly declare mounts).
+    each.key == "worker-5" ? [
       yamlencode({
         machine = {
           disks = [
-            for slot, spec in each.value.longhorn_disks : {
-              device     = spec.device
-              partitions = [{ mountpoint = "/var/mnt/longhorn-${slot}", size = 0 }]
-            }
+            { device = "/dev/sdb", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi1", size = 0 }] },
+            { device = "/dev/sdc", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi2", size = 0 }] },
+            { device = "/dev/sdd", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi3", size = 0 }] },
+            { device = "/dev/sde", partitions = [{ mountpoint = "/var/mnt/longhorn-scsi4", size = 0 }] }
           ]
         }
       })
@@ -193,4 +168,32 @@ resource "talos_machine_configuration_apply" "worker" {
   client_configuration        = talos_machine_secrets.this.client_configuration
 
   depends_on = [talos_machine_configuration_apply.controlplane]
+}
+
+# ----------------------------------------------------------------------
+# Ensure Longhorn-required labels are present on nodes with storage.
+#
+# workers.tf intends to set these via kubelet extraArgs.node-labels, but
+# that block is not reliably rendered into the machine configuration by
+# the Talos provider. This resource enforces the same labels at the
+# Kubernetes level. Both mechanisms can coexist: kubelet applies them on
+# join, this resource ensures they persist.
+# ----------------------------------------------------------------------
+resource "kubernetes_labels" "worker_longhorn" {
+  for_each = {
+    for name, w in local.workers : name => w
+    if length(w.longhorn_disks) > 0
+  }
+
+  api_version = "v1"
+  kind        = "Node"
+
+  metadata {
+    name = "${local.cluster_name}-${each.key}"
+  }
+
+  labels = {
+    "storage.capability"                   = "local-block"
+    "node.longhorn.io/create-default-disk" = "config"
+  }
 }

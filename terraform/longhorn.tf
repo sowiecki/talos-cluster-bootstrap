@@ -42,7 +42,8 @@ resource "helm_release" "longhorn" {
 
   depends_on = [
     kubernetes_namespace.longhorn_system,
-    talos_machine_configuration_apply.worker["worker-5"],
+    kubernetes_labels.worker_longhorn,
+    kubernetes_annotations.worker_longhorn_disks,
   ]
 
   values = [
@@ -112,4 +113,31 @@ resource "kubernetes_storage_class" "longhorn_sc" {
   }
 
   depends_on = [helm_release.longhorn]
+}
+
+resource "kubernetes_annotations" "worker_longhorn_disks" {
+  force = true
+
+  for_each = {
+    for name, w in local.workers : name => w
+    if length(w.longhorn_disks) > 0
+  }
+
+  api_version = "v1"
+  kind        = "Node"
+
+  metadata {
+    name = "${local.cluster_name}-${each.key}"
+  }
+
+  annotations = {
+    "node.longhorn.io/default-disks-config" = jsonencode([
+      for slot, spec in each.value.longhorn_disks : {
+        path            = "/var/mnt/longhorn-${slot}"
+        allowScheduling = true
+        tags            = []
+        storageReserved = 0
+      }
+    ])
+  }
 }
